@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.team4.project.domain.member.entity.Member;
 import org.team4.project.domain.service.dto.ServiceCreateRqBody;
+import org.team4.project.domain.service.entity.category.Category;
 import org.team4.project.domain.service.entity.category.TagService;
+import org.team4.project.domain.service.entity.resource.ServiceResource;
 import org.team4.project.domain.service.entity.reviews.ServiceReview;
 import org.team4.project.domain.service.exception.ServiceException;
 import org.team4.project.global.jpa.entity.BaseEntity;
@@ -32,18 +34,26 @@ public class ProjectService extends BaseEntity {
     private String content;
     private Integer price;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     @OneToMany(mappedBy = "service")
     private List<TagService> tags;
 
     @OneToMany(mappedBy = "service", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private List<ServiceReview> reviews;
 
-    public static ProjectService addService(ServiceCreateRqBody serviceCreateRqBody, Member freelancer) {
+    @OneToMany(mappedBy = "service")
+    private List<ServiceResource> resources;
+
+    public static ProjectService addService(ServiceCreateRqBody serviceCreateRqBody, Member freelancer, Category category) {
         return ProjectService.builder()
                 .freelancer(freelancer)
                 .title(serviceCreateRqBody.title())
                 .content(serviceCreateRqBody.content())
                 .price(serviceCreateRqBody.price())
+                .category(category)
                 .build();
     }
 

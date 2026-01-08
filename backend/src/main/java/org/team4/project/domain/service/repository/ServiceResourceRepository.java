@@ -12,8 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface ServiceResourceRepository extends JpaRepository<ServiceResource,Long> {
-    List<ServiceResource> findByProjectService(ProjectService projectService);
+    List<ServiceResource> findByService(ProjectService projectService);
 
-    @Query("SELECT sr FROM ServiceResource sr WHERE sr.projectService.id = :serviceId AND sr.isRepresentative = true")
+    @Query("SELECT sr FROM ServiceResource sr WHERE sr.service.id = :serviceId AND sr.isRepresentative = true")
     Optional<ServiceResource> findByProjectServiceAndIsRepresentative(@Param("serviceId") Long serviceId);
 }

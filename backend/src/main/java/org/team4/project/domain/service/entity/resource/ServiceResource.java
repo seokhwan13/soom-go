@@ -24,14 +24,14 @@ public class ServiceResource extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id")
-    private ProjectService projectService;
+    private ProjectService service;
 
     private Boolean isRepresentative;
 
     @Builder
     public ServiceResource(File file, ProjectService projectService, Boolean isRepresentative) {
         this.file = file;
-        this.projectService = projectService;
+        this.service = projectService;
         this.isRepresentative = isRepresentative;
     }
 }

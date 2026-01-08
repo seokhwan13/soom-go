@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.team4.project.domain.service.entity.category.type.CategoryType;
 import org.team4.project.global.jpa.entity.BaseEntity;
 
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor
@@ -19,6 +21,9 @@ public class Category extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
     private CategoryType name;
+
+    @OneToMany(mappedBy = "category")
+    private List<Tag> tags;
 
     public Category(CategoryType name) {
         this.name = name;

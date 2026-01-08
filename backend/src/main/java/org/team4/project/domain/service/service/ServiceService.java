@@ -9,9 +9,7 @@ import org.team4.project.domain.file.entity.File;
 import org.team4.project.domain.file.repository.FileRepository;
 import org.team4.project.domain.member.entity.Member;
 import org.team4.project.domain.member.repository.MemberRepository;
-import org.team4.project.domain.service.dto.ServiceCreateRqBody;
-import org.team4.project.domain.service.dto.ServiceDTO;
-import org.team4.project.domain.service.dto.ServiceDetailDTO;
+import org.team4.project.domain.service.dto.*;
 import org.team4.project.domain.service.entity.category.Category;
 import org.team4.project.domain.service.entity.category.Tag;
 import org.team4.project.domain.service.entity.category.TagService;
@@ -31,6 +29,7 @@ import org.team4.project.global.security.CustomUserDetails;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -57,13 +56,21 @@ public class ServiceService {
         Member freelancer = memberRepository.findByEmail(memberDetails.getEmail())
                 .orElseThrow(() -> new ServiceException("해당 사용자가 존재하지 않습니다."));
 
-        ProjectService service = serviceRepository.save(ProjectService.addService(serviceCreateRqBody, freelancer));
+        List<Tag> tags = tagRepository.findAllByNameIn(serviceCreateRqBody.tagNames());
+        Category category = tags.getFirst().getCategory();
+        ProjectService service = serviceRepository.save(ProjectService.addService(serviceCreateRqBody, freelancer, category));
 
-        serviceCreateRqBody.tagNames().forEach(tagType -> {
-            Tag tag = tagRepository.findByName(tagType)
-                    .orElseThrow(() -> new ServiceException("해당 태그가 존재하지 않습니다."));
-            tagServiceRepository.save(new TagService(tag, service));
-        });
+        Map<TagType, Tag> tagMap = tags.stream()
+                .collect(Collectors.toMap(Tag::getName, Function.identity()));
+        List<TagService> tagServices = serviceCreateRqBody.tagNames().stream()
+                .map(tagType -> {
+                    Tag tag = tagMap.get(tagType);
+                    if (tag == null) throw new ServiceException("해당 태그가 존재하지 않습니다.");
+                    return new TagService(tag, service);
+                })
+                .toList();
+        tagServiceRepository.saveAll(tagServices);
+
 
         List<File> files = fileRepository.findAllByS3UrlIn(serviceCreateRqBody.imageUrls());
         Map<String, File> fileMap = files.stream()
@@ -77,12 +84,6 @@ public class ServiceService {
                     return new ServiceResource(file, service, isMain);
                 })
                 .collect(Collectors.toList());
-
-        try {
-            serviceResourceRepository.saveAll(resources);
-        } catch (Exception e) {
-            throw new ServiceException("서비스 리소스 저장에 실패했습니다.");
-        }
 
         return service;
     }
@@ -103,7 +104,7 @@ public class ServiceService {
         Integer reviewCount = serviceReviewRepository.countByServiceId(id);
         Float rating = serviceReviewRepository.findAvgRatingByService(id);
 
-        List<ServiceResource> resources = serviceResourceRepository.findByProjectService(service);
+        List<ServiceResource> resources = serviceResourceRepository.findByService(service);
         List<String> imageUrls = resources.stream()
                 .map(resource -> {
                     return resource.getFile().getS3Url();
@@ -116,33 +117,13 @@ public class ServiceService {
     }
 
     //서비스 다건 조회
-    public Page<ServiceDTO> getServices(Pageable pageable) {
-        return serviceRepository.findAll(pageable)
-                .map(service -> {
-                    List<TagService> tagServices = findByService(service);
-                    Category category = tagServices.getFirst().getTag().getCategory();
-                    Integer reviewCount = serviceReviewRepository.countByServiceId(service.getId());
-                    Float rating = serviceReviewRepository.findAvgRatingByService(service.getId());
-                    String mainImage = serviceResourceRepository.findByProjectServiceAndIsRepresentative(service.getId())
-                            .map(resource -> resource.getFile().getS3Url())
-                            .orElse(null);
-                    return new ServiceDTO(service, tagServices, category, reviewCount, rating, mainImage);
-                });
+    public Page<ServiceListDTO> getServices(Pageable pageable) {
+        return serviceRepository.findAllOrderById(pageable);
     }
 
     //추천 서비스 다건 조회
-    public Page<ServiceDTO> getRecommendationServices(Pageable pageable) {
-        return serviceRepository.findAllOrderByReviewCountDesc(pageable)
-                .map(service -> {
-                    List<TagService> tagServices = findByService(service);
-                    Category category = tagServices.getFirst().getTag().getCategory();
-                    Integer reviewCount = serviceReviewRepository.countByServiceId(service.getId());
-                    Float rating = serviceReviewRepository.findAvgRatingByService(service.getId());
-                    String mainImage = serviceResourceRepository.findByProjectServiceAndIsRepresentative(service.getId())
-                            .map(resource -> resource.getFile().getS3Url())
-                            .orElse(null);
-                    return new ServiceDTO(service, tagServices, category, reviewCount, rating, mainImage);
-                });
+    public Page<ServiceListDTO> getRecommendationServices(Pageable pageable) {
+        return serviceRepository.findAllOrderByReviewCountDesc(pageable);
     }
 
     //서비스 검색 다건 조회

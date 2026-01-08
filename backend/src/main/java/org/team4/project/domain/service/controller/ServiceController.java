@@ -11,9 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.team4.project.domain.member.entity.Member;
-import org.team4.project.domain.service.dto.ServiceCreateRqBody;
-import org.team4.project.domain.service.dto.ServiceDTO;
-import org.team4.project.domain.service.dto.ServiceDetailDTO;
+import org.team4.project.domain.service.dto.*;
 import org.team4.project.domain.service.entity.category.type.CategoryType;
 import org.team4.project.domain.service.entity.category.type.TagType;
 import org.team4.project.domain.service.entity.service.ProjectService;
@@ -48,14 +46,14 @@ public class ServiceController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public Page<ServiceDTO> getServices(
+    public Page<ServiceListDTO> getServices(
         @PageableDefault(page = 0, size = 10, sort="id", direction = Sort.Direction.DESC)Pageable pageable) {
         return serviceService.getServices(pageable);
     }
 
     @GetMapping("/recommendation")
     @Transactional(readOnly = true)
-    public Page<ServiceDTO> getRecommendationServices(
+    public Page<ServiceListDTO> getRecommendationServices(
             @PageableDefault(page = 0, size = 10, sort="id", direction = Sort.Direction.DESC)Pageable pageable) {
         return serviceService.getRecommendationServices(pageable);
     }

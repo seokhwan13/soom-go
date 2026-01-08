@@ -36,7 +36,7 @@ public class MemberQueryRepository {
                            .from(payment)
                            .join(payment.member, member)
                            .join(payment.projectService, projectService)
-                           .leftJoin(serviceResource).on(serviceResource.projectService.eq(projectService)
+                           .leftJoin(serviceResource).on(serviceResource.service.eq(projectService)
                                                                                        .and(serviceResource.isRepresentative.isTrue()))
                            .leftJoin(serviceResource.file, file)
                            .where(member.email.eq(email))
