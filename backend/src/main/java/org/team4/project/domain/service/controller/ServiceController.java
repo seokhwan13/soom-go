@@ -60,7 +60,7 @@ public class ServiceController {
 
     @GetMapping("/search")
     @Transactional(readOnly = true)
-    public Page<ServiceDTO> getSearchedServices(
+    public Page<ServiceListDTO> getSearchedServices(
             @RequestParam("keyword") String keyword,
             @PageableDefault(page = 0, size = 10, sort="id", direction = Sort.Direction.DESC) Pageable pageable) {
         return serviceService.getSearchedServices(keyword, pageable);
@@ -68,7 +68,7 @@ public class ServiceController {
 
     @GetMapping("/category")
     @Transactional(readOnly = true)
-    public Page<ServiceDTO> getServicesByCategory(
+    public Page<ServiceListDTO> getServicesByCategory(
             @PageableDefault(page = 0, size = 10, sort="id", direction = Sort.Direction.DESC)Pageable pageable,
             @RequestParam CategoryType category) {
         return serviceService.getServicesByCategory(pageable, category);
@@ -76,7 +76,7 @@ public class ServiceController {
 
     @GetMapping("/tags")
     @Transactional(readOnly = true)
-    public Page<ServiceDTO> getServicesByTags(
+    public Page<ServiceListDTO> getServicesByTags(
             @PageableDefault(page = 0, size = 10, sort="id", direction = Sort.Direction.DESC)Pageable pageable,
             @RequestParam List<TagType> tags) {
         return serviceService.getServicesByTags(pageable, tags);

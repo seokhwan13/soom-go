@@ -72,18 +72,18 @@ public class ServiceService {
         tagServiceRepository.saveAll(tagServices);
 
 
-        List<File> files = fileRepository.findAllByS3UrlIn(serviceCreateRqBody.imageUrls());
-        Map<String, File> fileMap = files.stream()
-                .collect(Collectors.toMap(File::getS3Url, Function.identity()));
-
-        List<ServiceResource> resources = serviceCreateRqBody.imageUrls().stream()
-                .map(url -> {
-                    File file = fileMap.get(url);
-                    if (file == null) throw new ServiceException("해당 파일이 존재하지 않습니다.");
-                    boolean isMain = url.equals(serviceCreateRqBody.mainImageUrl());
-                    return new ServiceResource(file, service, isMain);
-                })
-                .collect(Collectors.toList());
+//        List<File> files = fileRepository.findAllByS3UrlIn(serviceCreateRqBody.imageUrls());
+//        Map<String, File> fileMap = files.stream()
+//                .collect(Collectors.toMap(File::getS3Url, Function.identity()));
+//
+//        List<ServiceResource> resources = serviceCreateRqBody.imageUrls().stream()
+//                .map(url -> {
+//                    File file = fileMap.get(url);
+//                    if (file == null) throw new ServiceException("해당 파일이 존재하지 않습니다.");
+//                    boolean isMain = url.equals(serviceCreateRqBody.mainImageUrl());
+//                    return new ServiceResource(file, service, isMain);
+//                })
+//                .collect(Collectors.toList());
 
         return service;
     }
@@ -127,48 +127,18 @@ public class ServiceService {
     }
 
     //서비스 검색 다건 조회
-    public Page<ServiceDTO> getSearchedServices(String keyWord, Pageable pageable) {
-        return serviceRepository.searchByTitle(keyWord, pageable)
-                .map(service -> {
-                    List<TagService> tagServices = findByService(service);
-                    Category category = tagServices.getFirst().getTag().getCategory();
-                    Integer reviewCount = serviceReviewRepository.countByServiceId(service.getId());
-                    Float rating = serviceReviewRepository.findAvgRatingByService(service.getId());
-                    String mainImage = serviceResourceRepository.findByProjectServiceAndIsRepresentative(service.getId())
-                            .map(resource -> resource.getFile().getS3Url())
-                            .orElse(null);
-                    return new ServiceDTO(service, tagServices, category, reviewCount, rating, mainImage);
-                });
+    public Page<ServiceListDTO> getSearchedServices(String keyWord, Pageable pageable) {
+        return serviceRepository.findAllByKeywordOrderById(keyWord, pageable);
     }
 
     //서비스 다건 조회 (카테고리)
-    public Page<ServiceDTO> getServicesByCategory(Pageable pageable, CategoryType category) {
-        return tagServiceRepository.findByCategory(category,pageable)
-                .map(service -> {
-                    List<TagService> tagServices = findByService(service);
-                    Category c = tagServices.getFirst().getTag().getCategory();
-                    Integer reviewCount = serviceReviewRepository.countByServiceId(service.getId());
-                    Float rating = serviceReviewRepository.findAvgRatingByService(service.getId());
-                    String mainImage = serviceResourceRepository.findByProjectServiceAndIsRepresentative(service.getId())
-                            .map(resource -> resource.getFile().getS3Url())
-                            .orElse(null);
-                    return new ServiceDTO(service, tagServices, c, reviewCount, rating, mainImage);
-                });
+    public Page<ServiceListDTO> getServicesByCategory(Pageable pageable, CategoryType category) {
+        return serviceRepository.findAllByCategoryOrderById(category, pageable);
     }
 
     //서비스 다건 조회 (태그)
-    public Page<ServiceDTO> getServicesByTags(Pageable pageable, List<TagType> tags) {
-        return tagServiceRepository.findByTags(tags, pageable)
-                .map(service -> {
-                    List<TagService> tagServices = findByService(service);
-                    Category category = tagServices.getFirst().getTag().getCategory();
-                    Integer reviewCount = serviceReviewRepository.countByServiceId(service.getId());
-                    Float rating = serviceReviewRepository.findAvgRatingByService(service.getId());
-                    String mainImage = serviceResourceRepository.findByProjectServiceAndIsRepresentative(service.getId())
-                            .map(resource -> resource.getFile().getS3Url())
-                            .orElse(null);
-                    return new ServiceDTO(service, tagServices, category, reviewCount, rating, mainImage);
-                });
+    public Page<ServiceListDTO> getServicesByTags(Pageable pageable, List<TagType> tags) {
+        return serviceRepository.findAllByTagsOrderById(tags, pageable);
     }
 
     //UPDATE------------------------------------------------------------------
